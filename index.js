@@ -1,8 +1,15 @@
 const express = require("express");
+const dotenv = require("dotenv");
+
+// import database connection file
+const DbConnection = require('./databaseConnection')
 
 const PORT = 8081;
 
 const app = express();
+dotenv.config();
+
+DbConnection();
 // const {users} = require("./data/users.json")
 
 // importing the routers
@@ -19,11 +26,11 @@ app.use("/users", usersRouter);
 app.use("/books", booksRouter);
 
 
-app.all('/{*splat}', (req, res)=> {
-    res.status(500).json({
-        message: "Not Build Yet !"
-    })
-});
+// app.all('/{*splat}', (req, res)=> {
+//     res.status(500).json({
+//         message: "Not Build Yet !"
+//     })
+// });
 
 app.listen(PORT, ()=> {
     console.log(`Server listen to the port : http://localhost:${PORT}`);    

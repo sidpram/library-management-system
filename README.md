@@ -11,6 +11,12 @@ npm i nodemon --save-dev
 
 npm run dev
 
+npm i mongoose
+
+npm install mongodb
+
+npm i dotenv
+
 ### Commit the code
 git status
 

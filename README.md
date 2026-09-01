@@ -13,7 +13,11 @@ npm run dev
 
 ### Commit the code
 git status
+
 git add .
-git commit -a "Initial Commit for testing"
+
 git status
+
+git commit -a "Initial Commit for testing"
+
 git push

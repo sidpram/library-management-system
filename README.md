@@ -1,2 +1,19 @@
 # library-management-system
-# Developer : SID
+#### Developer : SID
+This is a labrary managemnt system.
+
+### Command
+npm init
+npm i express
+
+//dev
+npm i nodemon --save-dev
+
+npm run dev
+
+### Commit the code
+git status
+git add .
+git commit -a "Initial Commit for testing"
+git status
+git push

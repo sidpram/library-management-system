@@ -2,6 +2,8 @@ const express = require("express");
 const { books } = require("../data/books.json");
 const {users} = require("../data/users.json");
 
+const { UserModel, BookModel } = require("../models/index");
+
 const router = express.Router();
 
 

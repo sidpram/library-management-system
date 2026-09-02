@@ -27,3 +27,9 @@ git status
 git commit -a "Initial Commit for testing"
 
 git push
+
+
+### MVC Architecture
+>>M: Model  (Structure of our MongoDb)
+>>V: View   (Frontend)
+>>C: Controller (Logic, or brain of App)

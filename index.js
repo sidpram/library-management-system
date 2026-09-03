@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require('cors');
 
 // import database connection file
 const DbConnection = require('./databaseConnection')
@@ -16,6 +17,8 @@ DbConnection();
 const usersRouter = require("./routes/users");
 const booksRouter = require("./routes/books");   
 
+// Enable CORS for the frontend dashboard
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res)=> {

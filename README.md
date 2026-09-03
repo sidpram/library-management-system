@@ -90,3 +90,21 @@ npm run dev
 ```
 
 The client expects the backend at `http://localhost:8081` (default from this repo). The dashboard includes pages for Books and Users with create/list actions.
+
+### Commands used (setup & testing)
+Run these from the project root unless noted otherwise.
+
+```bash
+# Backend: install deps, add CORS, run dev server
+npm install
+npm install cors
+npm run dev      # starts nodemon -> http://localhost:8081
+
+# Frontend (in client/): install deps and run dev server
+cd client
+npm install
+npm run dev      # starts Vite dev server (usually http://localhost:5173)
+
+# Alternative backend start (production)
+npm start        # runs node index.js
+```

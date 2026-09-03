@@ -7,7 +7,6 @@ const { getAllBooks, getBookById, getAllIssuedBooks, addNewBook, updateBookById,
 
 const router = express.Router();
 
-
 /**
  * Route: /books
  * Method: GET

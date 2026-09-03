@@ -2,6 +2,20 @@
 #### Developer : SID
 This is a labrary managemnt system.
 
+M: MongoDB (Database)
+
+E: ExpressJS (Backend)
+
+R: React + Tailwind CSS (Front End )
+
+N: NodeJS (backend/Server)
+
+Goal is  it use the MERN concept in the Application. 
+
+Frontend which client side browser will communicate with backend code and backend server is responsible to connect with Data base. Forntend will not communicate with DB directly.
+
+
+
 ### Command
 npm init
 npm i express
@@ -31,8 +45,11 @@ git push
 
 ### MVC Architecture
 >>M: Model  (Structure of our MongoDb)
+
 >>V: View   (Frontend)
+
 >>C: Controller (Logic, or brain of App)
+
 
 ### Example: create book (wrapped payload)
 If your client sends the book object wrapped inside a `data` property, the API accepts it. Example using `curl`:

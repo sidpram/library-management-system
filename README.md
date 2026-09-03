@@ -38,10 +38,19 @@ git add .
 
 git status
 
-git commit -a "Initial Commit for testing"
+git commit -m "Initial Commit for testing"
 
 git push
 
+### Creating backup branch
+git status 
+
+git switch -c Completed-DB-Code
+
+git push -u origin Completed-DB-Code 
+
+#### Switching back to main
+git switch main
 
 ### MVC Architecture
 >>M: Model  (Structure of our MongoDb)

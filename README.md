@@ -42,6 +42,16 @@ git commit -a "Initial Commit for testing"
 
 git push
 
+### Creating backup branch
+git status 
+
+git switch -c Full-Dash-board
+
+git push -u origin Full-Dash-board 
+
+#### Switching back to main
+git switch main
+
 
 ### MVC Architecture
 >>M: Model  (Structure of our MongoDb)

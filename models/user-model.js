@@ -26,14 +26,22 @@ const userSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
-        issuedDate: {
-            type: String,
-            required: false
-        },
-        returnDate: {
-            type: String,
-            required: false
-        },
+        issuedBooks: [
+            {
+                book: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'Book'
+                },
+                issuedDate: {
+                    type: Date,
+                    required: false
+                },
+                returnDate: {
+                    type: Date,
+                    required: false
+                }
+            }
+        ],
         subscriptionType: {
             type: String,
             required: true
@@ -42,11 +50,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true
         },
-        issuedBook: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Book",
-            required: false
-        }
+        
     },
     {
         timestamps: true

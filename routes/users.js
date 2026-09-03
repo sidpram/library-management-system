@@ -9,6 +9,8 @@ const {
     updateUserById,
     deleteUserById,
     getSubscriptionDetails,
+    issueBookToUser,
+    returnBookFromUser,
 } = require("../controllers/user-controller");
 
 /**
@@ -69,5 +71,11 @@ router.get('/subscription-details/:id', getSubscriptionDetails);
 
 // Optional: list users who have issued books
 router.get('/issued/for-users', getAllUsersWithIssuedBooks);
+
+// Issue a book to a user
+router.post('/:id/issue', issueBookToUser);
+
+// Return a book from a user
+router.post('/:id/return', returnBookFromUser);
 
 module.exports = router;

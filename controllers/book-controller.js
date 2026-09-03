@@ -1,253 +1,124 @@
-const { UserModel, BookModel } = require("../models/index");
-const booksdto = require("../dtos/book-dto");
+const { UserModel, BookModel } = require('../models/index');
 
-// router.get('/',(req, res)=>{
-//     res.status(200).json({
-//         success: true,
-//         data: books
-//     })
-// })
+// Get users who have the given book in their issuedBooks array
+exports.getSubscribersForBook = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const users = await UserModel.find({ 'issuedBooks.book': id })
+      .select('name surname email issuedBooks subscriptionType subscriptionDate')
+      .populate('issuedBooks.book')
+      .lean();
 
-exports.getAllBooks = async(req, res) =>{
+    if (!users || users.length === 0) return res.status(200).json({ success: true, data: [] });
 
-    const books = await BookModel.find()
-
-    if(books.length === 0){
-        return res.status(404).json({
-            success: false,
-            message: "No book found in the system"
-        })
-    }
-
-    res.status(200).json({
-        success: true,
-        data: books
-    })
- 
-}
-
-// router.get('/:id', (req, res)=> {
-
-//     const {id} = req.params;
-//     const book = books.find((each)=>each.id === id)
-
-//     if(!book){
-//       return  res.status(404).json({
-//             success: false,
-//             message: `Book Not Found for id: ${id}`
-//         })
-//     }
-
-//     res.status(200).json({
-//         success: true,
-//         data: book
-//     })
-// })  
-
-exports.getBookById = async( req, res) =>{
-    const {id} = req.params;
-    const books = await BookModel.findById(id)
-    
-    if(!books){
-        return res.status(404).json({
-            success: false,
-            message: `No book found in the system ${id}`
-        })
-    }
-
-    res.status(200).json({
-        success: true,
-        data: books
-    })
-    
-}
-
-// router.get('/issued/for-users', (req, res) => {
-//     // const issuedBooks = books.filter((each) => each.issued === true);
-
-//     const usersWithIssuedBooks = users.filter((each)=>{
-//         if(each.issuedBook) {
-//             return each;
-//         }
-//     })
-
-//     const issuedBooks = [];
-  
-//     usersWithIssuedBooks.forEach((each)=>{
-//         const book = books.find((book)=> book.id ===each.issuedBook);
-
-//         book.issuedBy = each.name;
-//         book.issuedDate = each.issuedDate;
-//         book.returnDate = each.returnDate;
-
-//         issuedBooks.push(book)
-//     })
-
-//     if(!issuedBooks === 0){
-//         return res.status(404).json({
-//             success: false,
-//             message: "No Books issued yet"
-//         })
-//     }
-
-//     res.status(200).json({
-//         success: true,
-//         data: issuedBooks
-//     });
-// });
-
-exports.getAllIssuedBooks = async( req, res) =>{
-
-    const usersWithIssuedBooks = await UserModel.find({
-        issuedBook : {$exists : true}
-    }).populate("issuedBook");
-
-    const issuedBooks = usersWithIssuedBooks.map((each)=>{
-       return new booksdto(each.issuedBook);
+    const subs = [];
+    users.forEach(u => {
+      (u.issuedBooks || []).forEach(rec => {
+        const bookId = rec.book && (rec.book._id || rec.book).toString();
+        if (bookId === id.toString()) {
+          subs.push({ name: u.name, surname: u.surname, email: u.email, issuedDate: rec.issuedDate, returnDate: rec.returnDate });
+        }
+      });
     });
 
-    if(issuedBooks.length === 0){
-        return res.status(404).json({
-            success: false,
-            message: "No Books issued yet"
-        })
-    }
-    res.status(200).json({
-        success: true,
-        data: issuedBooks
-    });  
+    return res.status(200).json({ success: true, data: subs });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch subscribers', error: error.message });
+  }
+};
 
-}
+// Return all books
+exports.getAllBooks = async (req, res) => {
+  try {
+    const books = await BookModel.find();
+    return res.status(200).json({ success: true, data: books });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch books', error: error.message });
+  }
+};
 
+// Get book by id
+exports.getBookById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const book = await BookModel.findById(id);
+    if (!book) return res.status(404).json({ success: false, message: `No book found in the system ${id}` });
+    return res.status(200).json({ success: true, data: book });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch book', error: error.message });
+  }
+};
 
-exports.addNewBook = async(req, res) =>{
-    try {
-        let data = req.body || {};
-
-        // unwrap payloads that nest the actual object inside a `data` property
-        if (data.data && typeof data.data === 'object') data = data.data;
-
-        // support older clients that may send `name` instead of `title`
-        if (data.name && !data.title) data.title = data.name;
-
-        const requiredFields = ["title", "author", "genre", "price", "publisher"];
-        const missing = requiredFields.filter((f) => !data[f]);
-
-        if (missing.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Missing required fields: ${missing.join(", ")}`
-            });
+// Return flattened list of all issued book entries across users
+exports.getAllIssuedBooks = async (req, res) => {
+  try {
+    const usersWithIssuedBooks = await UserModel.find({ 'issuedBooks.0': { $exists: true } }).populate('issuedBooks.book').lean();
+    const issuedBooks = [];
+    usersWithIssuedBooks.forEach(user => {
+      (user.issuedBooks || []).forEach(rec => {
+        if (rec.book) {
+          issuedBooks.push({
+            _id: rec.book._id,
+            title: rec.book.title || rec.book.name,
+            author: rec.book.author,
+            genre: rec.book.genre,
+            price: rec.book.price,
+            publisher: rec.book.publisher,
+            issuedBy: `${user.name || ''} ${user.surname || ''}`.trim(),
+            issuedDate: rec.issuedDate,
+            returnDate: rec.returnDate
+          });
         }
+      });
+    });
 
-        const book = await BookModel.create(data);
-        res.status(201).json({
-            success: true,
-            data: book
-        });
-    } catch (error) {
-        // If Mongoose validation still fails, surface a clear message
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ success: false, message: error.message });
-        }
-        res.status(500).json({ success: false, message: 'Failed to create book', error: error.message });
-    }
-}
+    if (issuedBooks.length === 0) return res.status(404).json({ success: false, message: 'No Books issued yet' });
+    return res.status(200).json({ success: true, data: issuedBooks });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch issued books', error: error.message });
+  }
+};
 
-// router.put('/:id', (req, res) => {
-//     const { id } = req.params;
-//     const { data } = req.body;
+// Create a new book with basic validation
+exports.addNewBook = async (req, res) => {
+  try {
+    let data = req.body || {};
+    if (data.data && typeof data.data === 'object') data = data.data; // unwrap payloads
+    if (data.name && !data.title) data.title = data.name;
 
-//     // if(!data || Object.keys(data).length === 0){
-//     //     return res.status(400).json({
-//     //         success: false,
-//     //         message: "Please provide the data to update"
-//     //     })
-//     // }
+    const requiredFields = ['title', 'author', 'genre', 'price', 'publisher'];
+    const missing = requiredFields.filter(f => !data[f]);
+    if (missing.length > 0) return res.status(400).json({ success: false, message: `Missing required fields: ${missing.join(', ')}` });
 
-//     // Check if the book exists
-//     const book = books.find((each) => each.id === id)
-//     if (!book) {
-//         return res.status(404).json({
-//             success: false,
-//             message: `Book Not Found for id: ${id}`
-//         })
-//     }
+    const book = await BookModel.create(data);
+    return res.status(201).json({ success: true, data: book });
+  } catch (error) {
+    if (error.name === 'ValidationError') return res.status(400).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to create book', error: error.message });
+  }
+};
 
-//     // Update the book details
-//     //    Object.assign(book, data);
-
-//     const updatedBook = books.map((each) => {
-//         if (each.id === id) {
-//             return { ...each, ...data };
-//         }
-//         return each;
-//     });
-
-//     res.status(200).json({
-//         success: true,
-//         message: "Book Updated Successfully",
-//         data: updatedBook
-//     })
-// })
-
-exports.updateBookById = async(req, res) =>{
-    const {id} = req.params;
-    const data = req.body;
-
+// Update book by id
+exports.updateBookById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body || {};
     const book = await BookModel.findByIdAndUpdate(id, data, { new: true });
+    if (!book) return res.status(404).json({ success: false, message: `Book Not Found for id: ${id}` });
+    return res.status(200).json({ success: true, message: 'Book Updated Successfully', data: book });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update book', error: error.message });
+  }
+};
 
-    if (!book) {
-        return res.status(404).json({
-            success: false,
-            message: `Book Not Found for id: ${id}`
-        });
-    }
-
-    res.status(200).json({
-        success: true,
-        message: "Book Updated Successfully",
-        data: book
-    });
-}
-
-// router.delete('/:id', (req, res) => {
-//     const { id } = req.params;
-
-//     // Check if the book exists
-//     const book = books.find((each) => each.id === id)
-//     if (!book) {
-//         return res.status(404).json({
-//             success: false,
-//             message: `Book Not Found for id: ${id}`
-//         })
-//     }
-
-//     // Delete the book from the books array
-//     const updatedBooks = books.filter((each) => each.id !== id);
-
-//     res.status(200).json({
-//         success: true,
-//         message: "Book Deleted Successfully",
-//         data: updatedBooks
-//     })
-// })
-
-exports.deleteBookById = async(req, res) =>{
-    const {id} = req.params;
-
+// Delete book by id
+exports.deleteBookById = async (req, res) => {
+  try {
+    const { id } = req.params;
     const book = await BookModel.findByIdAndDelete(id);
-
-    if (!book) {
-        return res.status(404).json({
-            success: false,
-            message: `Book Not Found for id: ${id}`
-        });
-    }
-
-    res.status(200).json({
-        success: true,
-        message: "Book Deleted Successfully",
-        data: book
-    });
-}
+    if (!book) return res.status(404).json({ success: false, message: `Book Not Found for id: ${id}` });
+    return res.status(200).json({ success: true, message: 'Book Deleted Successfully', data: book });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete book', error: error.message });
+  }
+};

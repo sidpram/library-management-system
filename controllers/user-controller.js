@@ -12,7 +12,7 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
 	const { id } = req.params;
-	const user = await UserModel.findById(id).populate("issuedBook");
+	const user = await UserModel.findById(id).populate("issuedBooks.book");
 
 	if (!user) {
 		return res.status(404).json({ success: false, message: `User Not Found for id: ${id}` });
@@ -22,7 +22,7 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.getAllUsersWithIssuedBooks = async (req, res) => {
-	const usersWithIssuedBooks = await UserModel.find({ issuedBook: { $exists: true } }).populate("issuedBook");
+	const usersWithIssuedBooks = await UserModel.find({ 'issuedBooks.0': { $exists: true } }).populate("issuedBooks.book");
 
 	if (!usersWithIssuedBooks || usersWithIssuedBooks.length === 0) {
 		return res.status(404).json({ success: false, message: "No users with issued books" });
@@ -92,7 +92,8 @@ exports.getSubscriptionDetails = async (req, res) => {
 		return dateVal;
 	};
 
-	const returnDate = getDateInDays(user.returnDate);
+	const firstIssued = user.issuedBooks && user.issuedBooks.length ? user.issuedBooks[0] : null;
+	const returnDate = getDateInDays(firstIssued && firstIssued.returnDate ? firstIssued.returnDate : '');
 	const currentDate = getDateInDays();
 	const subscriptionDate = getDateInDays(user.subscriptionDate);
 	const subscriptionExpiration = subscriptionType(subscriptionDate);
@@ -107,4 +108,59 @@ exports.getSubscriptionDetails = async (req, res) => {
 	};
 
 	res.status(200).json({ success: true, data });
+};
+
+exports.issueBookToUser = async (req, res) => {
+	try {
+		const { id } = req.params;
+		let body = req.body || {};
+		if (body.data && typeof body.data === 'object') body = body.data;
+		const { bookId, issuedDate, returnDate } = body;
+
+		const user = await UserModel.findById(id);
+		if (!user) return res.status(404).json({ success: false, message: `User Not Found for id: ${id}` });
+		const book = await BookModel.findById(bookId);
+		if (!book) return res.status(404).json({ success: false, message: `Book Not Found for id: ${bookId}` });
+
+		// ensure book is not already issued to another user
+		const holder = await UserModel.findOne({ 'issuedBooks.book': bookId });
+		if (holder) return res.status(400).json({ success: false, message: 'Book is already issued to another user' });
+
+		// ensure user doesn't already have the same book
+		if (user.issuedBooks && user.issuedBooks.find(e => e.book && e.book.toString() === bookId)) {
+			return res.status(400).json({ success: false, message: 'User already has this book issued' });
+		}
+
+		user.issuedBooks = user.issuedBooks || [];
+		user.issuedBooks.push({ book: book._id, issuedDate: issuedDate ? new Date(issuedDate) : new Date(), returnDate: returnDate ? new Date(returnDate) : undefined });
+
+		await user.save();
+		const populated = await UserModel.findById(user._id).populate('issuedBooks.book');
+		res.status(200).json({ success: true, data: populated });
+	} catch (error) {
+		res.status(500).json({ success: false, message: 'Failed to issue book', error: error.message });
+	}
+};
+
+exports.returnBookFromUser = async (req, res) => {
+	try {
+		const { id } = req.params;
+		let body = req.body || {};
+		if (body.data && typeof body.data === 'object') body = body.data;
+		const { bookId } = body;
+
+		if (!bookId) return res.status(400).json({ success: false, message: 'bookId is required to return a specific book' });
+
+		const user = await UserModel.findById(id);
+		if (!user) return res.status(404).json({ success: false, message: `User Not Found for id: ${id}` });
+
+		const has = user.issuedBooks && user.issuedBooks.find(e => e.book && e.book.toString() === bookId);
+		if (!has) return res.status(400).json({ success: false, message: 'User does not have this book issued' });
+
+		user.issuedBooks = user.issuedBooks.filter(e => !(e.book && e.book.toString() === bookId));
+		await user.save();
+		res.status(200).json({ success: true, data: user });
+	} catch (error) {
+		res.status(500).json({ success: false, message: 'Failed to return book', error: error.message });
+	}
 };

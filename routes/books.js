@@ -3,7 +3,7 @@ const { books } = require("../data/books.json");
 const { users } = require("../data/users.json");
 
 const { UserModel, BookModel } = require("../models/index");
-const { getAllBooks, getBookById, getAllIssuedBooks, addNewBook, updateBookById, deleteBookById } = require("../controllers/book-controller");
+const { getAllBooks, getBookById, getAllIssuedBooks, addNewBook, updateBookById, deleteBookById, getSubscribersForBook } = require("../controllers/book-controller");
 
 const router = express.Router();
 
@@ -42,6 +42,9 @@ router.get('/', getAllBooks)
 //     })
 // })  
 router.get('/:id', getBookById)
+
+// Get users who subscribed/issued this book
+router.get('/:id/subscribers', getSubscribersForBook)
 
 /**
  * Route: /books

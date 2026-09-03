@@ -77,3 +77,16 @@ curl -X POST http://localhost:8081/books \
 	-H "Content-Type: application/json" \
 	-d '{"title":"The Hobbit","author":"J.R.R. Tolkien","genre":"Fantasy","price":"12.99","publisher":"Houghton Mifflin"}'
 ```
+
+### Frontend (React + Tailwind) — Dashboard
+I scaffolded a `client` React app using Vite and Tailwind to manage books and users.
+
+How to run the frontend (from project root):
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+The client expects the backend at `http://localhost:8081` (default from this repo). The dashboard includes pages for Books and Users with create/list actions.

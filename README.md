@@ -33,3 +33,20 @@ git push
 >>M: Model  (Structure of our MongoDb)
 >>V: View   (Frontend)
 >>C: Controller (Logic, or brain of App)
+
+### Example: create book (wrapped payload)
+If your client sends the book object wrapped inside a `data` property, the API accepts it. Example using `curl`:
+
+```bash
+curl -X POST http://localhost:8081/books \
+	-H "Content-Type: application/json" \
+	-d '{"data": {"name": "The Hobbit","author":"J.R.R. Tolkien","genre":"Fantasy","price":"12.99","publisher":"Houghton Mifflin"}}'
+```
+
+Or send the object directly (preferred):
+
+```bash
+curl -X POST http://localhost:8081/books \
+	-H "Content-Type: application/json" \
+	-d '{"title":"The Hobbit","author":"J.R.R. Tolkien","genre":"Fantasy","price":"12.99","publisher":"Houghton Mifflin"}'
+```
